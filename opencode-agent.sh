@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+
+# Script to launch OpenCode AI agent in a Docker container.
+# It mounts the current workspace and config directories to persist agent state.
+
 set -euo pipefail
 
 WORKSPACE="$(pwd)"
