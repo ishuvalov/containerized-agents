@@ -27,11 +27,17 @@ Each script is self-contained:
 
 ## Usage
 
-Run the script you want from the repository root or from any project directory you want the agent to work on:
+Run the script you want from the repository root or from any project directory you want the agent to work on. All scripts support a -r/--rebuild flag to force rebuilding the container image before launching.
+
+Examples:
 
 ```bash
 ./opencode-agent.sh
 ./pi-agent.sh
+
+# Force rebuild of the container image
+./opencode-agent.sh -r
+./pi-agent.sh --rebuild
 ```
 
 Because the current folder is mounted into the container, run the script from the project you want the agent to inspect or modify.
@@ -40,4 +46,5 @@ Because the current folder is mounted into the container, run the script from th
 
 - The scripts expect Docker to be available locally.
 - The first run may take longer because the image is built and dependencies are installed inside the container.
+- Use the -r or --rebuild flag to force rebuilding the container image (useful after script updates or when you want to pick up upstream image or agent changes).
 - Any settings stored in the mounted config directories will persist between runs even though the container itself is ephemeral.

@@ -5,6 +5,30 @@
 
 set -euo pipefail
 
+usage() {
+  echo "Usage: $0 [--rebuild|-r]"
+}
+
+REBUILD=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -r|--rebuild)
+      REBUILD=true
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+  esac
+done
+
 WORKSPACE="$(pwd)"
 OPENCODE_CONFIG="$HOME/.config/opencode"
 OPENCODE_DATA="$HOME/.local/share/opencode"
@@ -12,9 +36,10 @@ OPENCODE_STATE="$HOME/.local/state/opencode"
 
 mkdir -p "$OPENCODE_CONFIG" "$OPENCODE_DATA" "$OPENCODE_STATE"
 
-docker pull node:24-slim
+if [[ "$REBUILD" == true ]] || ! docker image inspect opencode-agent >/dev/null 2>&1; then
+  docker pull node:24-slim
 
-docker build -t opencode-agent - <<'DOCKERFILE'
+  docker build --no-cache -t opencode-agent - <<'DOCKERFILE'
 FROM node:24-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -38,6 +63,7 @@ ENV PATH="/home/node/.npm-global/bin:/usr/local/bin:$PATH"
 ENV npm_config_prefix="/home/node/.npm-global"
 WORKDIR /workspace
 DOCKERFILE
+fi
 
 docker run --rm -it \
   --name opencode \

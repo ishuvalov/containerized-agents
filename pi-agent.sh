@@ -5,12 +5,37 @@
 
 set -euo pipefail
 
+usage() {
+  echo "Usage: $0 [--rebuild|-r]"
+}
+
+REBUILD=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -r|--rebuild)
+      REBUILD=true
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+  esac
+done
+
 WORKSPACE="$(pwd)"
 PI_CONFIG="$HOME/.pi"
 
 mkdir -p "$PI_CONFIG"
 
-docker build -t pi-agent - <<'DOCKERFILE'
+if [[ "$REBUILD" == true ]] || ! docker image inspect pi-agent >/dev/null 2>&1; then
+  docker build --no-cache -t pi-agent - <<'DOCKERFILE'
 FROM node:24-alpine
 
 # Install dependencies (bash is required for bun installer)
@@ -40,6 +65,7 @@ ENV npm_config_prefix="/home/node/.npm-global"
 
 WORKDIR /workspace
 DOCKERFILE
+fi
 
 docker run --rm -it \
   --name pi \
