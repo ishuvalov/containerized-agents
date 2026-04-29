@@ -19,6 +19,9 @@ BUN_SYSTEM_BIN="/usr/local/bin/bun"
 
 CONTAINER_PATH="/root/.bun/bin:${NPM_GLOBAL}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
+# Ollama defaults — override with env vars if needed
+OLLAMA_PORT="${OLLAMA_PORT:-11434}"
+
 # ---------------------------------------------------------------------------
 # Argument parsing
 # ---------------------------------------------------------------------------
@@ -105,19 +108,29 @@ if [[ "$REBUILD" == true ]] || ! docker image inspect "$IMAGE_NAME" >/dev/null 2
 fi
 
 # ---------------------------------------------------------------------------
+# Build docker run arguments
+# ---------------------------------------------------------------------------
+
+DOCKER_ARGS=(
+  --rm -it
+  --name "$CONTAINER_NAME"
+  -e HOME=/home/node
+  -e PATH="${CONTAINER_PATH}"
+  -e npm_config_prefix="${NPM_GLOBAL}"
+  # Resolve host.docker.internal → host machine IP
+  --add-host "host.docker.internal:host-gateway"
+  # Tell the agent (and any Ollama client libs) where Ollama lives
+  -e "OLLAMA_HOST=http://host.docker.internal:${OLLAMA_PORT}"
+  -v "$WORKSPACE:/workspace"
+  -v "$PI_CONFIG:/home/node/.pi"
+  -v "pi-agent-bin:/home/node/.pi/agent/bin"
+  --cap-drop=ALL
+  --security-opt no-new-privileges:true
+  --pids-limit=128
+)
+
+# ---------------------------------------------------------------------------
 # Run container
 # ---------------------------------------------------------------------------
 
-docker run --rm -it \
-  --name "$CONTAINER_NAME" \
-  -e HOME=/home/node \
-  -e PATH="${CONTAINER_PATH}" \
-  -e npm_config_prefix="${NPM_GLOBAL}" \
-  -v "$WORKSPACE:/workspace" \
-  -v "$PI_CONFIG:/home/node/.pi" \
-  -v "pi-agent-bin:/home/node/.pi/agent/bin" \
-  --cap-drop=ALL \
-  --security-opt no-new-privileges:true \
-  --pids-limit=128 \
-  "$IMAGE_NAME" \
-  pi
+docker run "${DOCKER_ARGS[@]}" "$IMAGE_NAME" pi
