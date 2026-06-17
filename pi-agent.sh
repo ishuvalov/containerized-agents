@@ -11,7 +11,7 @@ set -euo pipefail
 
 IMAGE_NAME="pi-agent"
 CONTAINER_NAME="pi"
-PI_PACKAGE="@mariozechner/pi-coding-agent"
+PI_PACKAGE="@earendil-works/pi-coding-agent"
 
 NODE_VERSION="24-alpine"
 NPM_GLOBAL="/home/node/.npm-global"
@@ -85,7 +85,7 @@ RUN apk add --no-cache \\
     unzip \\
     git && \\
     npm config set prefix ${NPM_GLOBAL} && \\
-    npm install -g ${PI_PACKAGE} && \\
+    npm install -g ${PI_PACKAGE} @earendil-works/pi-tui && \\
     chown -R node:node /home/node
 
 # Install bun and make it available system-wide
